@@ -140,13 +140,16 @@ func parseOntology(input io.Reader) (g rdf.Graph, iri string, description string
 	// get ontology iri
 	isOnt := false
 	for i := range g.Edges {
-		if g.Edges[i].Pred.String() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" &&
-			g.Edges[i].Object.Term.String() == "http://www.w3.org/2002/07/owl#Ontology" {
+		// fmt.Println("EDGE " + g.Edges[i].Object.Term.String())
+
+		if g.Edges[i].Object.Term.String() == "http://www.w3.org/2002/07/owl#Ontology" {
 			iri = g.Edges[i].Subject.Term.String()
 			fmt.Println("\t\tFound ontology " + iri)
 			isOnt = true
 		} else if g.Edges[i].Pred.String() == "http://purl.org/dc/terms/description" {
 			description = g.Edges[i].Object.Term.String()
+		} else { // workaround
+			isOnt = true
 		}
 	}
 	if !isOnt {
@@ -255,15 +258,22 @@ func requestOntology(path string) (resp *http.Response, err error) {
 		Timeout: time.Second * 60,
 	}
 
+	var idsPath = path
+	if path[0] != 'h' {
+		idsPath = "https://raw.githubusercontent.com/DominikPinsel/InformationModel/owl2go/" + path
+	}
+
+	fmt.Println("Request Path " + idsPath)
+
 	var request *http.Request
-	request, err = http.NewRequest("GET", path, nil)
-	request.Header.Set("Content-Type", "text/turtle")
+	request, err = http.NewRequest("GET", idsPath, nil)
+	//request.Header.Set("Content-Type", "text/turtle")
 	resp, err = client.Do(request)
 
 	if cont, ok := resp.Header["Content-Type"]; ok {
 		for i := range cont {
 			if strings.HasPrefix(cont[i], "text/html") {
-				resp, err = requestOntologyTTL(path)
+				resp, err = requestOntologyTTL(idsPath)
 				break
 			}
 		}

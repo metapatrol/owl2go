@@ -958,7 +958,12 @@ func (p *parser) consumeWS(pos int) (num int) {
 func (p *parser) parseUntil(pos int, delim rune) (res string, length int, err error) {
 	length = 0
 	var r []rune
+
 	for {
+		// c := p.runes[length]
+		//fmt.Println("RUNE")
+		//fmt.Println(c, string(c), strconv.QuoteRune(c))
+
 		if len(p.runes) <= pos+length {
 			err = errors.New("reached eof before delimiter")
 			return
